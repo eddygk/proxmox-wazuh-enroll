@@ -24,7 +24,7 @@ metadata:
 
 # Proxmox → Windows Wazuh Enrollment
 
-Install the Wazuh agent inside a Windows VM hosted on Proxmox VE, driven through the QEMU guest agent (QGA) as `NT AUTHORITY\SYSTEM`. No AD credentials, no GPO, no domain-controller pivot — scoped to exactly the target VM. The agent is passive (reads/forwards logs only), so this is safe on a live server, including a DC.
+Install the Wazuh agent inside a Windows VM hosted on Proxmox VE, driven through the QEMU guest agent (QGA) as `NT AUTHORITY\SYSTEM`. No AD credentials, no GPO, no domain-controller pivot — scoped to exactly the target VM. This is a state-changing install on a live server; confirm the target VM, manager address, agent group, and registration-secret handling before running it.
 
 ## Execution layer (read first)
 
@@ -32,7 +32,7 @@ Install the Wazuh agent inside a Windows VM hosted on Proxmox VE, driven through
 
 ## The recipe, at a glance
 
-Full detail — including the env block to fill, the `authd.pass` alternative, and manual/Hyper-V hosts — is in `references/wazuh-agent-enroll.md`. The shape:
+Full detail — including the env block to fill and the `authd.pass` alternative — is in `references/wazuh-agent-enroll.md`. The shape:
 
 1. **Create the agent group on the manager first.** authd rejects an unknown group (`ERROR: Invalid group`) and the agent never enrolls: `/var/ossec/bin/agent_groups -a -g <group> -q`.
 2. **Install in-guest via QGA:** `curl.exe` download → `msiexec /qn` with `WAZUH_MANAGER` (the manager's address **on the VM's VLAN**), `WAZUH_AGENT_NAME`, `WAZUH_AGENT_GROUP`, and the registration password over **stdin**. Success = `msiexec` exit **0 or 3010**.
@@ -52,4 +52,4 @@ The registration password comes from the operator's vault and is fed to the gues
 ## Reference files
 
 - `references/qga-exec.md` — the QGA execution layer: on-host `qm guest exec` vs off-host REST, secrets over stdin, `cmd` vs PowerShell + 8.3 paths, silent-installer exit codes, the unescaped-control-char parsing gotcha.
-- `references/wazuh-agent-enroll.md` — the full enrollment recipe: create the group, install via MSI over QGA, connect, verify manager-side; the `authd.pass` alternative; manual / Hyper-V host specifics.
+- `references/wazuh-agent-enroll.md` — the full enrollment recipe: create the group, install via MSI over QGA, connect, verify manager-side; the `authd.pass` alternative; out-of-scope host guidance.

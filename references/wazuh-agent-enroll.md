@@ -1,8 +1,8 @@
 # Wazuh agent enrollment on a Windows Proxmox VM (via QGA)
 
-Enroll a Windows VM into a Wazuh manager with **no AD creds, no GPO, no DC pivot** — scoped to exactly the target VM, executed as `NT AUTHORITY\SYSTEM` through the QEMU guest agent. Read `qga-exec.md` first; it's the execution layer this recipe rides on. Proven 2026-06-28 against WDS, DC1, DC2, DC3, STORAGE-SVR.
+Enroll a Windows VM into a Wazuh manager with **no AD creds, no GPO, no DC pivot** — scoped to exactly the target VM, executed as `NT AUTHORITY\SYSTEM` through the QEMU guest agent. Read `qga-exec.md` first; it's the execution layer this recipe rides on.
 
-The Wazuh agent is passive — it reads and forwards logs; it opens no ports and touches no firewall/auth. This is safe to run on a live server, including a domain controller. It does not touch Active Directory.
+The Wazuh agent is passive — it reads and forwards logs; it opens no inbound ports and does not touch Active Directory. It is still a state-changing software install on a live server, so verify the target and change window before running it.
 
 ## What you need first
 
@@ -63,19 +63,13 @@ Run it once to trigger enrollment, check the manager (step 4); if it's still `ne
 
 The agent's own logs can look healthy while the manager still rejects it — so **verify manager-side**:
 
-- The agent shows `active` with the expected IP (the read-only `wazuh` monitoring skill's `wz.sh agents` answers this, or "ask Claude to check `<name>` in Wazuh").
+- The agent shows `active` with the expected IP. The read-only `wazuh` monitoring skill's `wz.sh agents` command can answer this.
 - If it's stuck `never_connected` / `disconnected`, the real reason is in **`/var/ossec/logs/ossec.log` on the manager** — authd lines show invalid-group, wrong password, or a key mismatch. Diagnose there, not in the guest.
 
-## Hosts without a Proxmox guest agent (manual / Hyper-V)
+## Hosts without a Proxmox guest agent
 
-A physical Windows host or a non-Proxmox hypervisor has no QGA — enroll it by hand with the same `curl.exe` + `msiexec` + restart recipe in an elevated prompt. For a **Hyper-V** host, also add the VM-tamper event channels to `ossec.conf` (confirm exact names per build with `wevtutil el | findstr /I Hyper-V`):
-
-- `Microsoft-Windows-Hyper-V-Worker-Admin` — VM start/stop / worker-process events.
-- `Microsoft-Windows-Hyper-V-VMMS-Admin` — VM create/delete/config-change (the tamper signal).
-- `Microsoft-Windows-Hyper-V-Hypervisor-Operational` — hypervisor launch/scheduler.
-
-To manage channel config across many hosts, push it via the group's shared `agent.conf` on the manager rather than editing each `ossec.conf`.
+This skill is for Windows guests on Proxmox with QGA available. For physical Windows hosts, non-Proxmox hypervisors, Linux hosts, appliances, or syslog-only sources, use a Wazuh/endpoint-specific workflow instead of this Proxmox QGA workflow.
 
 ## Grounding
 
-Windows specifics here — `msiexec` exit codes (0/3010), `cmd` chaining/operators, and the Hyper-V event-channel names — were confirmed against **Microsoft Learn**. Re-confirm there when a detail looks build-dependent.
+Confirm build-dependent Windows details against Microsoft documentation, especially `msiexec` exit codes (0/3010) and `cmd` chaining/operators.
