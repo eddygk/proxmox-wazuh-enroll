@@ -13,13 +13,7 @@ description: >-
   or coverage checks; Linux, LXC, appliance, or syslog enrollment; generic Proxmox
   VM creation; generic PowerShell guest exec; or non-Wazuh endpoint agents.
 metadata:
-  openclaw:
-    homepage: https://github.com/eddygk/proxmox-wazuh-enroll
-    os:
-      - linux
-    requires:
-      bins:
-        - bash
+  openclaw: "{\"homepage\":\"https://github.com/eddygk/proxmox-wazuh-enroll\",\"os\":[\"linux\"],\"requires\":{\"bins\":[\"bash\"]}}"
 ---
 
 # Proxmox → Windows Wazuh Enrollment
